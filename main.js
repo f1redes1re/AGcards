@@ -1,250 +1,334 @@
-// Этап 1. Создайте функцию, генерирующую массив парных чисел. Пример массива, который должна возвратить функция: [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8].count - количество пар.
+// eslint-disable-next-line import/extensions
+import { Card, AmazingCard } from './class-card.js';
+// eslint-disable-next-line import/no-cycle
+
+/* eslint-disable no-underscore-dangle */
+// Функция создания первоначального массива чисел
+// eslint-disable-next-line max-classes-per-file
 function createNumArray(count) {
   const numArray = [];
-  for (let num = 1; num <= (Math.pow(count, 2) / 2); num++) {
-    const pairNum = Math.floor(Math.random() * 8) + 1;
-    numArray.push(pairNum, pairNum);
+  for (let num = 1; num <= (count ** 2 / 2); num++) {
+    numArray.push(num, num);
   }
   return numArray;
-};
+}
 
-// Этап 2. Создайте функцию перемешивания массива.Функция принимает в аргументе исходный массив и возвращает перемешанный массив. arr - массив чисел
+// Функция перемешивания чисел в массиве
 function shuffle(arr) {
-for (let i = arr.length - 1; i > 0; i--) {
+  for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
 }
 
-// Этап 3. Используйте две созданные функции для создания массива перемешанными номерами. На основе этого массива вы можете создать DOM-элементы карточек. У каждой карточки будет свой номер из массива произвольных чисел. Вы также можете создать для этого специальную функцию. count - количество пар.
-function startGame() {
+// Функция создания DOM-элемента
+export function createDOMElement(tag, classes = [], attributes = {}, textContent = '') {
+  const element = document.createElement(tag);
+  if (Array.isArray(classes)) {
+    element.classList.add(...classes);
+  }
+  // eslint-disable-next-line guard-for-in
+  for (const attr in attributes) {
+    element.setAttribute(attr, attributes[attr]);
+  }
+  element.textContent = textContent;
+  return element;
+}
 
-  // Блок № 1 - Создание ДОМ элементов
-  const container = document.createElement('div');
-  container.classList.add('container');
+// Функция добавления начальной игровой формы
+function addStartGameForm() {
+  const container = createDOMElement('div', ['container'], { id: 'container' });
+  const gameForm = createDOMElement('form', ['main__ask-container'], { id: 'gameForm' });
+  const gameFormLabel = createDOMElement('label', ['main__ask-title'], { for: 'inputCardsNum' }, 'Количество карточек (по вертикали и горизонтали)');
+  const gameFormInput = createDOMElement('input', ['main__ask-input', 'form-control'], {
+    type: 'number',
+    required: true,
+    min: 0,
+    max: 10,
+    id: 'inputCardsNum',
+    placeholder: 'Введите четное число от 4 до 10',
+  });
+  const gameFormBtn = createDOMElement('button', ['main__ask-btn', 'btn'], { type: 'submit', id: 'gameFormBtn' }, 'Начать игру');
 
-  // Создание формы
-  const gameForm = document.createElement('form');
-  gameForm.classList.add('main__ask-container');
+  const switchGameModeContainer = createDOMElement('div', ['switch-container'], {});
+  const switchGameModeLabel = createDOMElement('label', ['switch'], {});
+  const switchGameModeInput = createDOMElement('input', ['checkbox'], { type: 'checkbox', id: 'switch' });
+  const switchGameModeSpan = createDOMElement('span', ['slider', 'round'], {});
+  const switchGameModeTextNum = createDOMElement('span', ['slider-text', 'slider-text-num'], {}, 'Числа');
+  const switchGameModeTextPic = createDOMElement('span', ['slider-text'], {}, 'Картинки');
 
-  // Создание заголовка форме
-  const gameFormLabel = document.createElement('label');
-  gameFormLabel.classList.add('main__ask-title');
-  gameFormLabel.setAttribute('for', 'inputCardsNum');
-  gameFormLabel.textContent = 'Количество карточек по вертикали / горизонтали';
-
-  // Создание ввода в форме
-  const gameFormInput = document.createElement('input');
-  gameFormInput.classList.add('main__ask-input', 'form-control');
-  gameFormInput.type = 'number';
-  gameFormInput.required = true;
-  gameFormInput.min = 0;
-  gameFormInput.max = 10;
-  gameFormInput.placeholder = 'Введите четное число от 4 до 10';
-  gameFormInput.setAttribute('id', 'inputCardsNum');
-
-  // Создание кнопки, создающей поле карточек
-  const gameFormBtn = document.createElement('button');
-  gameFormBtn.classList.add('main__ask-btn', 'btn');
-  gameFormBtn.textContent = 'Начать игру';
-  gameFormBtn.type = 'submit';
-
-  // Создание контейнера и картинки
-  const gameImgWrapper = document.createElement('div');
-  gameImgWrapper.classList.add('main__wrap');
-  const gameImage = document.createElement('img');
-  gameImage.src = 'https://media.giphy.com/media/fAD9SMlNWp0k84Ra1G/giphy.gif';
-  gameImage.classList.add('main__image');
-
-  // Создание контейнера для кнопок
-  const cardWrapper = document.createElement('div');
-  cardWrapper.classList.add('btn-wrapper');
-
-  // Создание игрового таймера
-  const gameTimerWrapper = document.createElement('div');
-  gameTimerWrapper.classList.add('main__timer-wrapper');
-  const gameTimer = document.createElement('span');
-  gameTimer.classList.add('main__timer');
-  gameTimer.textContent = '60';
-  const gameTimerPreviewText = document.createElement('span');
-  gameTimerPreviewText.classList.add('main__timer-text');
-  gameTimerPreviewText.textContent = 'Осталось времени:';
-
-  // Добавление контейнера в ДОМ
-  document.body.append(container);
-  // Добавление в контейнер формы и ее составляющих
+  // Добавление элементов в DOM
+  gameForm.append(gameFormLabel, gameFormInput, gameFormBtn);
+  switchGameModeLabel.append(switchGameModeInput, switchGameModeSpan);
+  switchGameModeContainer.append(switchGameModeTextNum, switchGameModeLabel, switchGameModeTextPic);
+  container.append(switchGameModeContainer);
   container.append(gameForm);
-  gameForm.append(gameFormLabel);
-  gameForm.append(gameFormInput);
-  gameForm.append(gameFormBtn);
+  document.body.append(container);
+}
 
-  // Блок № 2 - добавления события для клика по кнопке формы
-  gameFormBtn.addEventListener('click', function(event) {
-    // Отмена дефолт события отправки данных
-    event.preventDefault();
+// Объявление глобальной переменной для временного интервала
+let timerInterval;
 
-    // Функция таймера
-    let remainingTime = parseInt(gameTimer.textContent);
-    let timerInterval;
-    function startTimer() {
-      timerInterval = setInterval(function() {
-        remainingTime--;
-        const formattedTime = formatTime(remainingTime);
-        gameTimer.textContent = formattedTime;
-        if (remainingTime === 0) {
-          location.reload();
-        }
-      }, 1000);
+// Функция добавления таймера в DOM
+function addGameTimer() {
+  // Создание контейнера для таймера
+  const gameTimerWrapper = createDOMElement('div', ['main__timer-wrapper'], { id: 'gameTimerWrapper' });
+
+  // Создание числовой записи игрового таймера
+  const gameTimer = createDOMElement('span', ['main__timer'], { id: 'gameTimer' }, '60');
+
+  // Создание текста перед таймером
+  const gameTimerPreviewText = createDOMElement('span', ['main__timer-text'], { id: 'gameTimerPreviewText' }, 'Осталось времени:');
+
+  // Добавление элементов на страницу
+  gameTimerWrapper.append(gameTimerPreviewText, gameTimer);
+  document.getElementById('container').append(gameTimerWrapper);
+  gameTimerWrapper.style.display = 'none';
+}
+
+// Функция запуска таймера
+function startTimer(someTimer) {
+  // Остановка предыдущего таймера
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+
+  let remainingTime = parseInt(someTimer.textContent, 10);
+
+  timerInterval = setInterval(() => {
+    remainingTime--;
+    const remainingSeconds = remainingTime % 60;
+    const formattedTime = remainingSeconds.toString().padStart(2, '0');
+    someTimer.textContent = formattedTime;
+    if (remainingTime === 0) {
+      // eslint-disable-next-line no-restricted-globals
+      location.reload();
     }
-    function stopTimer() {
-      clearInterval(timerInterval);
-    }
-    function formatTime(seconds) {
-      const remainingSeconds = seconds % 60;
-      return `${pad(remainingSeconds)}`;
-    }
-    function pad(number) {
-      return number.toString().padStart(2, '0');
-    }
-    startTimer();
+  }, 1000);
+}
 
-    // Проверка ввода корректного значения
-    let count = parseInt(gameFormInput.value);
+// Функция остановки таймера
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+}
 
-    if (!count || isNaN(count)) {
-      return
-    };
+// Функция завершения партии игры
+function endGameBtnVisible() {
+  const continueGame = document.querySelector('.main__continue-btn');
+  const exitToStart = document.querySelector('.main__exit-btn');
 
-    if (count > 10 || count < 2 || (count % 2 !== 0)) {
-      count = 4;
-    }
+  // Изменяем видимость кнопок
+  continueGame.style.display = 'block';
+  exitToStart.style.display = 'block';
 
-    // Добавление в контейнер картинки и обертки для карточек
-    gameImgWrapper.append(gameImage);
-    gameTimerWrapper.append(gameTimerPreviewText);
-    gameTimerWrapper.append(gameTimer);
-    container.append(gameImgWrapper);
-    container.append(gameTimerWrapper);
-    container.append(cardWrapper);
+  stopTimer();
+}
 
-    let numArray = shuffle(createNumArray(count));
-    // Создание массива карточек
-    let checkPairs = [];
-    // Создание массива для проверки пар
-    let pairsCounter = 0;
-    // Создание счетчика количества найденных парных карточек
-    let cards = [];
-    // Создание массива для всех кнопок
+// Функция добавления кнопок завершения игры
+function addEndGameBtns(someContainer, someCards, someCount, SomeClass) {
+  const continueGame = createDOMElement('button', ['btn', 'main__continue-btn'], {}, 'Сыграть ещё раз');
+  someContainer.append(continueGame);
+  continueGame.scrollIntoView({ behavior: 'smooth' });
+  continueGame.style.display = 'none';
 
-    // Блок № 3 - цикл создания поля карточек
-    for (let num = 0; num < numArray.length; num++) {
+  const exitToStart = createDOMElement('button', ['btn', 'main__exit-btn'], {}, 'Перейти в главное меню');
+  someContainer.append(exitToStart);
+  continueGame.after(exitToStart);
+  exitToStart.style.display = 'none';
 
-      // Создание карточки, стилизация, наполнение
-      const card = document.createElement('button');
-      card.classList.add('btn', 'btn-font-black');
-      card.textContent = numArray[num];
+  continueGame.addEventListener('click', () => {
+    // eslint-disable-next-line no-use-before-define
+    createGameField(someContainer, someCount, someCards, SomeClass);
 
-      // Блок 4 - добавление события клика по карточке
-      card.addEventListener('click', function() {
+    // eslint-disable-next-line no-use-before-define
+    gameCardsFn(someCount, SomeClass);
+  });
 
-        if (card.classList.contains('btn-font-white')) {
-          return
-        };
-
-        card.classList.add('btn-font-white');
-        // Открываем карточку
-
-        checkPairs.push(card);
-        // Добавляем карточку в массив проверки парных карточек
-
-        if (checkPairs.length === 2) {
-          const firstNum = parseInt(checkPairs[0].textContent);
-          // Создание переменной для числа в первой карточке
-          const secondNum = parseInt(checkPairs[1].textContent);
-          // Создание переменной для числа во второй карточке
-          if (firstNum === secondNum) {
-            // Проверка: если первая открытая карточка совпадает со второй
-            pairsCounter++;
-            checkPairs = [];
-            // После проверки двух карточек массив проверки обнуляется
-            if (pairsCounter === (Math.pow(count, 2) / 2)) {
-              // Создание кнопки "Сыграть ещё"
-              const continueGame = document.createElement('button');
-              continueGame.textContent = 'Сыграть ещё раз';
-              continueGame.classList.add('main__continue-btn', 'btn');
-              container.append(continueGame);
-              continueGame.scrollIntoView({ behavior: 'smooth' });
-
-              // Создание кнопки перезапуска игры
-              const exitToStart = document.createElement('button');
-              exitToStart.textContent = 'Перейти в главное меню';
-              exitToStart.classList.add('main__exit-btn', 'btn');
-
-              // Создание обработчика события клика для кнопки "Сыграть ещё"
-              continueGame.addEventListener('click', function() {
-                const btnWhiteRemove = btn => btn.classList.remove('btn-font-white');
-                cards.forEach(btnWhiteRemove);
-                checkPairs = [];
-                pairsCounter = 0;
-                stopTimer();
-                remainingTime = 60;
-                startTimer();
-                container.removeChild(exitToStart);
-                container.removeChild(continueGame);
-                timeout = setTimeout(function() {
-                  let numArray = shuffle(createNumArray(count));
-                  cards.forEach((card, index) => {
-                    card.textContent = numArray[index];
-                    card.classList.remove('btn-font-white');
-                  });
-                }, 100)
-              });
-
-              container.append(exitToStart);
-              continueGame.after(exitToStart);
-              exitToStart.addEventListener('click', function() {
-                location.reload();
-              })
-            }
-          }
-        };
-        if (checkPairs.length > 2) {
-          (resetNotPairs = () => {
-            const firstCard = checkPairs[0];
-            const secondCard = checkPairs[1];
-            firstCard.classList.remove('btn-font-white');
-            secondCard.classList.remove('btn-font-white');
-            checkPairs.splice(firstCard, 1);
-            checkPairs.splice(secondCard, 1);
-          })();
-        }
-      });
-
-      // Блок 5 - добавление карточки в общий массив
-      cards.push(card);
-    }
-
-    // Блок 6 - добавление на страницу сетки из карточек
-    const rows = count;
-    const cols = count;
-    const addCardsTable = document.createElement('table');
-    // Цикл добавления строк
-    for (let i = 0; i < rows; i++) {
-      const row = document.createElement('tr');
-      addCardsTable.append(row);
-      // Цикл добавления ячеек
-      for (let j = 0; j < cols; j++) {
-        const cell = document.createElement('td');
-        const index = i * cols + j;
-        row.append(cell);
-        cell.append(cards[index]); // добавление карточки в ячейку таблицы
-      }};
-    container.removeChild(gameForm);
-    cardWrapper.append(addCardsTable);
+  exitToStart.addEventListener('click', () => {
+    // eslint-disable-next-line no-restricted-globals
+    location.reload();
   });
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+// Функция создания и добавления в DOM игрового поля
+function createGameField(someContainer, someCount, someCards, SomeClass) {
+  if (someContainer.firstChild) {
+    // eslint-disable-next-line no-use-before-define
+    deleteGameField();
+  }
+
+  // Создание контейнера и картинки
+  const gameImgWrapper = createDOMElement('div', ['main__wrap']);
+  const gameImage = createDOMElement('img', ['main__image'], {
+    src: 'https://media.giphy.com/media/fAD9SMlNWp0k84Ra1G/giphy.gif',
+  });
+  gameImgWrapper.append(gameImage);
+  someContainer.append(gameImgWrapper);
+
+  addGameTimer();
+
+  const gameTimer = document.getElementById('gameTimer');
+  const gameTimerWrapper = document.getElementById('gameTimerWrapper');
+  const gameTimerPreviewText = document.getElementById('gameTimerPreviewText');
+
+  // Добавление в контейнер картинки и обертки для карточек
+  gameTimerWrapper.append(gameTimerPreviewText);
+  gameTimerWrapper.append(gameTimer);
+  someContainer.append(gameTimerWrapper);
+
+  gameTimerWrapper.style.display = '';
+
+  startTimer(gameTimer);
+
+  // Создание контейнера для кнопок
+  const cardWrapper = createDOMElement('div', ['btn-wrapper']);
+  someContainer.append(cardWrapper);
+
+  // Добавление на страницу сетки из карточек
+  const rows = someCount;
+  const cols = someCount;
+  const addCardsTable = createDOMElement('table');
+  // Цикл добавления строк
+  for (let i = 0; i < rows; i++) {
+    const row = createDOMElement('tr');
+    addCardsTable.append(row);
+    // Цикл добавления ячеек
+    for (let j = 0; j < cols; j++) {
+      const cell = createDOMElement('td');
+      const index = i * cols + j;
+      row.append(cell);
+      // добавление карточки в ячейку таблицы
+      cell.append(someCards[index]);
+    }
+  }
+  const gameForm = document.getElementById('gameForm');
+  if (gameForm) {
+    gameForm.remove();
+  }
+  cardWrapper.append(addCardsTable);
+
+  addEndGameBtns(someContainer, someCards, someCount, SomeClass);
+}
+
+function deleteGameField() {
+  const container = document.getElementById('container');
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+}
+
+function gameCardsFn(someCount, SomeClass) {
+  const container = document.getElementById('container');
+
+  // Проверка ввода корректного значения
+  // eslint-disable-next-line no-restricted-globals
+  if (!someCount || isNaN(someCount)) {
+    return;
+  }
+
+  if (someCount > 10 || someCount < 2 || (someCount % 2 !== 0)) {
+    // eslint-disable-next-line no-param-reassign
+    someCount = 4;
+  }
+
+  // Создание массива перемешанных карточек
+  const numArray = shuffle(createNumArray(someCount));
+
+  // Создание массива для проверки каждых двух открытых карточек
+  let checkPairs = [];
+
+  // Создание счетчика для найденных парных карточек
+  let pairsCounter = 0;
+
+  // Создание массива для всех кнопок
+  const cards = [];
+
+  // Цикл создания поля карточек
+  for (const num of numArray) {
+    // Создание карточки, стилизация, наполнение
+    // eslint-disable-next-line no-shadow, no-loop-func
+    const card = new SomeClass(container, ((card) => {
+      // Проверка октрыта ли карточка
+      if (card.element.classList.contains('btn-font-white') || card.element.classList.contains('img-font-white')) {
+        return;
+      }
+
+      // Открываем карточку
+      card.open = true;
+
+      // Отправляем карточку в массив найденных парных карточек
+      checkPairs.push(card);
+
+      // Проверка совпадения пары в массиве
+      if (checkPairs.length === 2) {
+        // Проверка двух ранее добавленных карточек на парность
+        const firstNum = parseInt(checkPairs[0].element.textContent, 10);
+        const secondNum = parseInt(checkPairs[1].element.textContent, 10);
+        if (firstNum === secondNum) {
+          // eslint-disable-next-line no-param-reassign
+          pairsCounter++;
+          // eslint-disable-next-line no-param-reassign
+          checkPairs = [];
+          if (pairsCounter === (someCount ** 2 / 2)) {
+            // eslint-disable-next-line no-use-before-define
+            endGameBtnVisible(someCount, cards);
+          }
+        }
+      }
+
+      // Действия для двух не-совпавших открытых карточек
+      if (checkPairs.length > 2) {
+        const firstCard = checkPairs[0];
+        const secondCard = checkPairs[1];
+
+        firstCard.open = false;
+        secondCard.open = false;
+
+        // Если пара не совпала, убираем карточки из массива проверки
+        // eslint-disable-next-line no-shadow
+        checkPairs = checkPairs.filter((card) => card !== firstCard && card !== secondCard);
+      }
+
+      // Проверка для того, чтобы можно было сыграть еще раз
+      if (pairsCounter === (someCount ** 2 / 2)) {
+        pairsCounter = 0;
+        if (document.querySelector('.main__continue-btn') && document.querySelector('.main__exit-btn')) {
+          endGameBtnVisible();
+        }
+      }
+    }));
+
+    // Создание карточки как DOM элемента, соответствующего своему числу
+    card.createElement(num);
+
+    // Добавление карточки в общий массив
+    cards.push(card.element);
+  }
+
+  createGameField(container, someCount, cards, SomeClass);
+}
+
+// Функция начала игры
+export default function startGame() {
+  addStartGameForm();
+
+  document.getElementById('gameFormBtn').addEventListener('click', (event) => {
+    event.preventDefault();
+
+    const gameFormInput = document.getElementById('inputCardsNum');
+    const count = parseInt(gameFormInput.value, 10);
+
+    if (document.getElementById('switch').checked) {
+      gameCardsFn(count, AmazingCard);
+    } else {
+      gameCardsFn(count, Card);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
   startGame();
 });
